@@ -1,0 +1,48 @@
+{
+  "name": "examx-backend-new",
+  "displayName": "ExamX-Backend-New",
+  "version": "1.0.0",
+  "description": "Monitors coding activity in VS Code during exams or assessments to ensure fair and authentic submissions.",
+  "publisher": "Nikonerds",
+  "license": "MIT",
+  "main": "dist/server.js",
+  "scripts": {
+    "test": "cross-env NODE_ENV=test jest",
+    "build": "tsc",
+    "dev": "NODE_ENV=dev nodemon",
+    "start": "NODE_ENV=prod node dist/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheShenron/ExamX-Backend-new.git"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/TheShenron/ExamX-Backend-new/issues"
+  },
+  "homepage": "https://github.com/TheShenron/ExamX-Backend-new#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "luxon": "^3.7.2",
+    "mongoose": "^9.1.5",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "nanoid": "^5.1.6",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^25.2.0",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
