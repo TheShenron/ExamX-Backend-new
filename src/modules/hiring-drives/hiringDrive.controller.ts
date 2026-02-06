@@ -19,6 +19,28 @@ export const getHiringDrives = async (_: Request, res: Response) => {
     res.json({ success: true, data: drives });
 };
 
+export const deleteHiringDrive = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const drive = await HiringDrive.findOneAndUpdate(
+        { _id: id, deletedAt: null },
+        { deletedAt: new Date(), isActive: false },
+        { new: true }
+    );
+
+    if (!drive) {
+        return res.status(404).json({
+            success: false,
+            message: "Hiring drive not found",
+        });
+    }
+
+    res.json({
+        success: true,
+        message: "Hiring drive deleted successfully",
+    });
+};
+
 export const getHiringDriveCandidates = async (req: Request, res: Response) => {
     const { id } = req.params;
 
@@ -197,5 +219,25 @@ export const removeExamFromHiringDrive = async (req: Request, res: Response) => 
     });
 };
 
+export const getHiringDriveExams = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const drive = await HiringDrive.findOne({
+        _id: id,
+        deletedAt: null,
+    }).populate("exams");
+
+    if (!drive) {
+        return res.status(404).json({
+            success: false,
+            message: "Hiring drive not found",
+        });
+    }
+
+    res.json({
+        success: true,
+        data: drive.exams,
+    });
+};
 
 

@@ -12,17 +12,6 @@ const resultSchema = new Schema(
 
         score: Number,
         isPassed: Boolean,
-
-        // proctorSummary: {
-        //     tabSwitches: { type: Number, default: 0 },
-        //     copyPaste: { type: Number, default: 0 },
-        //     devToolsOpen: { type: Boolean, default: false },
-        //     riskLevel: {
-        //         type: String,
-        //         enum: ["LOW", "MEDIUM", "HIGH"],
-        //         default: "LOW"
-        //     }
-        // }
     },
     { timestamps: true }
 );

@@ -8,13 +8,12 @@ export const createExam = async (req: Request, res: Response) => {
 
 export const updateExam = async (req: Request, res: Response) => {
     const { id } = req.params;
-
-    const userId = (req as any).user.id;
+    const { userId } = req.body;
     const exam = await Exam.findOneAndUpdate(
         { _id: id, deletedAt: null },
         {
             ...req.body,
-            updatedBy: userId // assuming auth middleware
+            updatedBy: userId
         },
         { new: true }
     );
