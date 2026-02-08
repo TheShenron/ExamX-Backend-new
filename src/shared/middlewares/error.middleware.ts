@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { StatusCodes } from "http-status-codes";
 
 export function errorMiddleware(
     err: any,
@@ -6,7 +7,7 @@ export function errorMiddleware(
     res: Response,
     _next: NextFunction
 ) {
-    return res.status(400).json({
+    return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
         message: err.message || "Something went wrong"
     });

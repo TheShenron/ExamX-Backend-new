@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Exam } from "./exam.model";
+import { StatusCodes } from "http-status-codes";
 
 export const createExam = async (req: Request, res: Response) => {
     const exam = await Exam.create(req.body);
@@ -8,7 +9,8 @@ export const createExam = async (req: Request, res: Response) => {
 
 export const updateExam = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { userId } = req.body;
+    const userId = req.user?.id;
+
     const exam = await Exam.findOneAndUpdate(
         { _id: id, deletedAt: null },
         {
@@ -19,7 +21,7 @@ export const updateExam = async (req: Request, res: Response) => {
     );
 
     if (!exam) {
-        return res.status(404).json({
+        return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
             message: "Exam not found"
         });
@@ -30,7 +32,7 @@ export const updateExam = async (req: Request, res: Response) => {
 
 export const deleteExam = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const userId = req.body.userId;
+    const userId = req.user?.id;
 
     const exam = await Exam.findOneAndUpdate(
         { _id: id, deletedAt: null },
@@ -43,7 +45,7 @@ export const deleteExam = async (req: Request, res: Response) => {
     );
 
     if (!exam) {
-        return res.status(404).json({
+        return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
             message: "Exam not found"
         });

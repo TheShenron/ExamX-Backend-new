@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { HiringDrive } from "./hiringDrive.model";
 import { generateDriveCode } from "../../shared/utils/generateDriveCode";
+import { StatusCodes } from "http-status-codes";
 
 export const createHiringDrive = async (req: Request, res: Response) => {
     const drive = await HiringDrive.create({
@@ -29,7 +30,7 @@ export const deleteHiringDrive = async (req: Request, res: Response) => {
     );
 
     if (!drive) {
-        return res.status(404).json({
+        return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
             message: "Hiring drive not found",
         });
@@ -46,13 +47,17 @@ export const getHiringDriveCandidates = async (req: Request, res: Response) => {
 
     const drive = await HiringDrive.findOne({
         _id: id,
-        deletedAt: null
+        deletedAt: null,
     })
-        .populate("candidates.userId", "name email")
-        .select("candidates");
+        .select("candidates")
+        .populate({
+            path: "candidates.userId",
+            select: "name email",
+            match: { deletedAt: null },
+        });
 
     if (!drive) {
-        return res.status(404).json({
+        return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
             message: "Hiring drive not found"
         });
@@ -67,7 +72,7 @@ export const getHiringDriveCandidates = async (req: Request, res: Response) => {
 
 export const addCandidateToHiringDrive = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { userId } = req.body;
+    const { userId } = req.body
 
     const drive = await HiringDrive.findOne({
         _id: id,
@@ -75,7 +80,7 @@ export const addCandidateToHiringDrive = async (req: Request, res: Response) => 
     });
 
     if (!drive) {
-        return res.status(404).json({
+        return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
             message: "Hiring drive not found"
         });
@@ -86,7 +91,7 @@ export const addCandidateToHiringDrive = async (req: Request, res: Response) => 
     );
 
     if (alreadyExists) {
-        return res.status(400).json({
+        return res.status(StatusCodes.BAD_REQUEST).json({
             success: false,
             message: "Candidate already added"
         });
@@ -114,7 +119,7 @@ export const removeCandidateFromHiringDrive = async (req: Request, res: Response
     });
 
     if (!drive) {
-        return res.status(404).json({
+        return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
             message: "Hiring drive not found"
         });
@@ -131,71 +136,86 @@ export const removeCandidateFromHiringDrive = async (req: Request, res: Response
 };
 
 export const updateCandidateAttempts = async (req: Request, res: Response) => {
-    const { id, userId } = req.params;
-    const { incrementBy = 1, setTo } = req.body;
+    const { id, userId, action } = req.params;
 
-    const drive = await HiringDrive.findOne({
+    const query: any = {
         _id: id,
-        deletedAt: null
-    });
+        deletedAt: null,
+    };
 
-    if (!drive) {
-        return res.status(404).json({
+    // for inc: candidate must exist
+    if (action === "inc") {
+        query["candidates.userId"] = userId;
+    }
+
+    // for dec: candidate must exist AND attemptsUsed > 0
+    if (action === "dec") {
+        query.candidates = {
+            $elemMatch: {
+                userId,
+                attemptsUsed: { $gt: 0 },
+            },
+        };
+    }
+
+    const updated = await HiringDrive.findOneAndUpdate(
+        query,
+        {
+            $inc: { "candidates.$.attemptsUsed": action === "inc" ? 1 : -1 },
+        },
+        { new: true }
+    ).select("candidates");
+
+    if (!updated) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
             success: false,
-            message: "Hiring drive not found"
+            message:
+                action === "dec"
+                    ? "Cannot decrement (attempts already 0 or candidate not found)"
+                    : "Hiring drive or candidate not found",
         });
     }
 
-    const candidate = drive.candidates.find(
-        c => c.userId.toString() === userId
+    const candidate = updated.candidates.find(
+        (c) => c.userId.toString() === userId
     );
 
-    if (!candidate) {
-        return res.status(404).json({
-            success: false,
-            message: "Candidate not found in drive"
-        });
-    }
-
-    if (typeof setTo === "number") {
-        candidate.attemptsUsed = Math.max(0, setTo);
-    } else {
-        candidate.attemptsUsed += Math.max(1, incrementBy);
-    }
-
-    await drive.save();
-
-    res.json({
+    return res.status(StatusCodes.OK).json({
         success: true,
         data: {
-            userId: candidate.userId,
-            attemptsUsed: candidate.attemptsUsed
-        }
+            userId,
+            attemptsUsed: candidate?.attemptsUsed ?? 0,
+        },
     });
 };
 
-export const addExamToHiringDrive = async (req: Request, res: Response) => {
+export const addExamsToHiringDrive = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { examId } = req.body;
+    const { examIds } = req.body;
 
     const drive = await HiringDrive.findOneAndUpdate(
         { _id: id, deletedAt: null },
-        { $addToSet: { exams: examId } },
+        {
+            $addToSet: {
+                exams: { $each: examIds },
+            },
+        },
         { new: true }
     );
 
     if (!drive) {
-        return res.status(404).json({
+        return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
-            message: "Hiring drive not found"
+            message: "Hiring drive not found",
         });
     }
 
-    res.json({
+    return res.status(StatusCodes.OK).json({
         success: true,
-        message: "Exam added successfully"
+        message: "Exam(s) added successfully",
     });
 };
+
 
 export const removeExamFromHiringDrive = async (req: Request, res: Response) => {
     const { id, examId } = req.params;
@@ -207,7 +227,7 @@ export const removeExamFromHiringDrive = async (req: Request, res: Response) => 
     );
 
     if (!drive) {
-        return res.status(404).json({
+        return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
             message: "Hiring drive not found"
         });
@@ -228,7 +248,7 @@ export const getHiringDriveExams = async (req: Request, res: Response) => {
     }).populate("exams");
 
     if (!drive) {
-        return res.status(404).json({
+        return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
             message: "Hiring drive not found",
         });

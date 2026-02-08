@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
+import { UserSchema } from "./user.validator";
 
-const userSchema = new Schema(
+const userSchema = new Schema<UserSchema>(
     {
         name: String,
         email: { type: String, unique: true },

@@ -1,41 +1,40 @@
 import { Request, Response } from "express";
 import { ProctorEvent } from "./proctorEvent.model";
 import { Result } from "../results/result.model";
+import { StatusCodes } from "http-status-codes";
 
 export const addProctoringResult = async (req: Request, res: Response) => {
     const { resultId } = req.params;
     const { events } = req.body;
 
-    if (!Array.isArray(events)) {
-        return res.status(400).json({
-            success: false,
-            message: "events must be an array"
-        });
-    }
+    const result = await Result.findOne({
+        _id: resultId,
+        userId: req.user!.id,
+    }).select("_id");
 
-    const resultExists = await Result.exists({ _id: resultId });
-    if (!resultExists) {
-        return res.status(404).json({
+    if (!result) {
+        return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
-            message: "Result not found"
+            message: "Result not found",
         });
     }
 
     try {
         const proctoring = await ProctorEvent.create({
             resultId,
-            events
+            events,
         });
 
-        res.json({
+        return res.status(StatusCodes.CREATED).json({
             success: true,
-            data: proctoring
+            data: proctoring,
         });
     } catch (err: any) {
+        // duplicate key error
         if (err.code === 11000) {
-            return res.status(400).json({
+            return res.status(StatusCodes.CONFLICT).json({
                 success: false,
-                message: "Proctoring data already exists for this result"
+                message: "Proctoring data already exists for this result",
             });
         }
 
@@ -46,38 +45,60 @@ export const addProctoringResult = async (req: Request, res: Response) => {
 export const deleteProctoringResult = async (req: Request, res: Response) => {
     const { resultId } = req.params;
 
-    const deleted = await ProctorEvent.findOneAndDelete({
-        resultId
-    });
+    const result = await Result.findOne({
+        _id: resultId,
+        userId: req.user!.id,
+    }).select("_id");
 
-    if (!deleted) {
-        return res.status(404).json({
+    if (!result) {
+        return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
-            message: "Proctoring data not found"
+            message: "Result not found",
         });
     }
 
-    res.json({
+    const deleted = await ProctorEvent.findOneAndDelete({ resultId });
+
+    if (!deleted) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+            success: false,
+            message: "Proctoring data not found",
+        });
+    }
+
+    return res.status(StatusCodes.OK).json({
         success: true,
-        message: "Proctoring data deleted successfully"
+        message: "Proctoring data deleted successfully",
     });
 };
 
 export const getProctoringResult = async (req: Request, res: Response) => {
     const { resultId } = req.params;
 
-    const proctoring = await ProctorEvent.findOne({ resultId });
+    const result = await Result.findOne({
+        _id: resultId,
+        userId: req.user!.id,
+    }).select("_id");
 
-    if (!proctoring) {
-        return res.status(404).json({
+    if (!result) {
+        return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
-            message: "Proctoring data not found"
+            message: "Result not found",
         });
     }
 
-    res.json({ success: true, data: proctoring });
+    const proctoring = await ProctorEvent.findOne({ resultId });
+
+    if (!proctoring) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+            success: false,
+            message: "Proctoring data not found",
+        });
+    }
+
+    return res.status(StatusCodes.OK).json({
+        success: true,
+        data: proctoring,
+    });
 };
-
-
-
 
