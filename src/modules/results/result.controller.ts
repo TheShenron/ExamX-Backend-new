@@ -12,7 +12,8 @@ export const startExam = async (req: Request, res: Response) => {
         userId,
         examId,
         hiringDriveId,
-        startedAt: DateTime.utc().toJSDate()
+        startedAt: DateTime.utc().toJSDate(),
+        submittedAt: null,
     });
 
     res.json({ success: true, data: result });

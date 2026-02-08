@@ -3,8 +3,12 @@ import { deleteExam, startExam, submitExam, getExamResult } from "./result.contr
 import { verifyToken } from "../../middlewares/verify-token";
 import { validateReq } from "../../middlewares/validate-req";
 import { startExamSchema, submitExamSchema, deleteExamxamSchema, getExamResultSchema } from "./result.validator";
+import proctoringRoutes from "../proctoring/proctor.routes";
 
 const router = Router();
+
+// proctoring routes
+router.use("/", proctoringRoutes);
 
 router.post("/start", verifyToken, validateReq({ body: startExamSchema }), startExam);
 router.post("/submit", verifyToken, validateReq({ body: submitExamSchema }), submitExam);

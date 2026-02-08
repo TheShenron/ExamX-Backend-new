@@ -3,7 +3,11 @@ import { Exam } from "./exam.model";
 import { StatusCodes } from "http-status-codes";
 
 export const createExam = async (req: Request, res: Response) => {
-    const exam = await Exam.create(req.body);
+    const exam = await Exam.create({
+        ...req.body,
+        createdBy: req.user?.id,
+        updatedBy: req.user?.id
+    });
     res.json({ success: true, data: exam });
 };
 

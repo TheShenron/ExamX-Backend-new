@@ -17,6 +17,4 @@ const proctorSchema = new Schema(
     { timestamps: true }
 );
 
-proctorSchema.index({ resultId: 1 }, { unique: true });
-
 export const ProctorEvent = model("ProctorEvent", proctorSchema);
