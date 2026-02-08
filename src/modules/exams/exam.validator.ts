@@ -15,7 +15,7 @@ export const createExamSchema = z.object({
         .min(1, "Duration must be at least 1 minute")
         .max(180, "Duration cannot be more than 180 minutes"),
 
-    isActive: z.boolean().optional(),
+    isActive: z.coerce.boolean().default(true),
 });
 
 export const deleteExamSchema = z.object({
@@ -31,5 +31,5 @@ export const updateExamSchema = z.object({
 
     duration: z.coerce.number().min(1).max(180).optional(),
 
-    isActive: z.boolean().optional(),
+    isActive: z.coerce.boolean().default(true),
 });

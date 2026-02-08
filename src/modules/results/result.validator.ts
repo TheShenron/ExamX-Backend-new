@@ -19,8 +19,14 @@ export const deleteExamxamSchema = z.object({
     hiringDriveId: objectIdSchema
 });
 
-export const getExamResultSchema = z.object({
+export const getExamResultByExamIdSchema = z.object({
     examId: objectIdSchema,
     hiringDriveId: objectIdSchema
 });
+
+export const getExamResultSchema = z.object({
+    hiringDriveId: objectIdSchema
+});
+
+
 

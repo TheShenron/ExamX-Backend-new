@@ -101,13 +101,29 @@ export const deleteExam = async (req: Request, res: Response) => {
     res.json({ success: true, message: "Exam deleted successfully", data: deleted });
 };
 
-export const getExamResult = async (req: Request, res: Response) => {
-    const { examId, hiringDriveId } = req.query;
+export const getExamResultByExamId = async (req: Request, res: Response) => {
+    const { examId, hiringDriveId } = req.params;
     const userId = req.user?.id
 
     const result = await Result.findOne({ examId, userId, hiringDriveId });
 
     if (!result) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+            success: false,
+            message: "Result not found"
+        });
+    }
+
+    res.json({ success: true, data: result });
+};
+
+export const getExamResult = async (req: Request, res: Response) => {
+    const { hiringDriveId } = req.params;
+    const userId = req.user?.id
+
+    const result = await Result.find({ userId, hiringDriveId });
+
+    if (result.length === 0) {
         return res.status(StatusCodes.NOT_FOUND).json({
             success: false,
             message: "Result not found"

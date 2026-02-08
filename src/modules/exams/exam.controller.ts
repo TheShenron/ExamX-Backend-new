@@ -6,7 +6,8 @@ export const createExam = async (req: Request, res: Response) => {
     const exam = await Exam.create({
         ...req.body,
         createdBy: req.user?.id,
-        updatedBy: req.user?.id
+        updatedBy: req.user?.id,
+        examZipFile: req.file?.buffer || undefined,
     });
     res.json({ success: true, data: exam });
 };
@@ -65,6 +66,7 @@ export const getAllExams = async (req: Request, res: Response) => {
     const exams = await Exam.find({
         deletedAt: null
     })
+        // .select("-examZipFile")
         .populate("createdBy", "name email")
         .populate("updatedBy", "name email")
         .sort({ createdAt: -1 });

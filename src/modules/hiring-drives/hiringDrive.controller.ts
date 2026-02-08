@@ -245,7 +245,10 @@ export const getHiringDriveExams = async (req: Request, res: Response) => {
     const drive = await HiringDrive.findOne({
         _id: id,
         deletedAt: null,
-    }).populate("exams");
+    }).populate({
+        path: "exams",
+        select: "-examZipFile",
+    });
 
     if (!drive) {
         return res.status(StatusCodes.NOT_FOUND).json({

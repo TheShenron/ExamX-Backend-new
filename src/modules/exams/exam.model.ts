@@ -27,9 +27,9 @@ const examSchema = new Schema(
             max: 180
         },
 
-        // examZipFile: {
-        //     type: Buffer,
-        // },
+        examZipFile: {
+            type: Buffer,
+        },
 
         // instructionFile: {
         //     type: String,
