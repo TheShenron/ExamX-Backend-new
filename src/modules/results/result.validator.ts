@@ -25,7 +25,8 @@ export const getExamResultByExamIdSchema = z.object({
 });
 
 export const getExamResultSchema = z.object({
-    hiringDriveId: objectIdSchema
+    hiringDriveId: objectIdSchema,
+    userId: objectIdSchema
 });
 
 

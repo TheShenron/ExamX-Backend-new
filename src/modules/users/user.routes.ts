@@ -1,16 +1,22 @@
 import { Router } from "express";
-import { createUser, deleteUser, getAllUsers, getUserHiringDrives, loginUser, updateUser } from "./user.controller";
+import { createUser, deleteMyUser, deleteUserById, getAllUsers, getMyHiringDriveExam, getMyHiringDrives, getUserHiringDriveResult, getUserHiringDrivesById, loginUser, updateMyUser, updateUserById } from "./user.controller";
 import { validateReq } from "../../middlewares/validate-req";
-import { createUserSchema, loginSchema } from "./user.validator";
-import { verifyToken } from "../../middlewares/verify-token";
+import { createUserSchema, getMyHiringDriveExamSchema, loginSchema } from "./user.validator";
+import { allowRoles, verifyToken } from "../../middlewares/verify-token";
+import { ADMIN, CANDIDATE, HR } from "../../shared/constants/enums";
 
 const router = Router();
 
-router.get("/", verifyToken, getAllUsers);
+router.get("/", verifyToken, allowRoles(ADMIN, HR), getAllUsers);
 router.post("/", validateReq({ body: createUserSchema }), createUser);
 router.post("/login", validateReq({ body: loginSchema }), loginUser);
-router.put("/:userId", validateReq({ body: createUserSchema }), verifyToken, updateUser);
-router.delete("/:userId", verifyToken, deleteUser);
-router.get("/:userId/hiring-drives", verifyToken, getUserHiringDrives);
+router.put("/me", validateReq({ body: createUserSchema }), verifyToken, allowRoles(CANDIDATE), updateMyUser);
+router.put("/:userId", validateReq({ body: createUserSchema }), verifyToken, allowRoles(ADMIN), updateUserById);
+router.delete("/:userId", verifyToken, allowRoles(ADMIN), deleteUserById);
+router.delete("/me", verifyToken, allowRoles(ADMIN), deleteMyUser);
+router.get("/:userId/hiring-drives", verifyToken, allowRoles(ADMIN, HR), getUserHiringDrivesById);
+router.get("/me/hiring-drives", verifyToken, allowRoles(CANDIDATE), getMyHiringDrives);
+router.get("/me/hiring-drives/:id/exams", verifyToken, validateReq({ params: getMyHiringDriveExamSchema }), allowRoles(CANDIDATE), getMyHiringDriveExam);
+router.get("/:id/results/:userId", verifyToken, allowRoles(ADMIN), getUserHiringDriveResult);
 
 export default router;

@@ -16,6 +16,10 @@ export const updateExam = async (req: Request, res: Response) => {
     const { id } = req.params;
     const userId = req.user?.id;
 
+    if (req.file?.buffer) {
+        req.body.examZipFile = req.file.buffer;
+    }
+
     const exam = await Exam.findOneAndUpdate(
         { _id: id, deletedAt: null },
         {
@@ -66,10 +70,11 @@ export const getAllExams = async (req: Request, res: Response) => {
     const exams = await Exam.find({
         deletedAt: null
     })
-        // .select("-examZipFile")
+        .select("-examZipFile")
         .populate("createdBy", "name email")
         .populate("updatedBy", "name email")
         .sort({ createdAt: -1 });
+
 
     res.json({
         success: true,

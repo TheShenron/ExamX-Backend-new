@@ -7,6 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
 export interface UserPayload {
     id: string;
     email: string;
+    role: string;
 }
 
 export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
@@ -40,4 +41,19 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
             message: 'Invalid token',
         });
     }
+};
+
+export const allowRoles = (...roles: string[]) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        const userRole = req.user?.role;
+
+        if (!userRole || !roles.includes(userRole)) {
+            return res.status(StatusCodes.FORBIDDEN).json({
+                success: false,
+                message: "Forbidden",
+            });
+        }
+
+        next();
+    };
 };

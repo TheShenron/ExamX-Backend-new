@@ -6,6 +6,14 @@ const resultSchema = new Schema(
         examId: { type: Types.ObjectId, ref: "Exam" },
         hiringDriveId: { type: Types.ObjectId, ref: "HiringDrive" },
 
+        attemptNo: { type: Number, required: true },
+
+        status: {
+            type: String,
+            enum: ["started", "submitted", "expired"],
+            default: "started",
+        },
+
         startedAt: Date,
         submittedAt: Date,
         durationTaken: Number,
@@ -16,7 +24,9 @@ const resultSchema = new Schema(
     { timestamps: true }
 );
 
-
-resultSchema.index({ userId: 1, examId: 1 });
+resultSchema.index(
+    { userId: 1, hiringDriveId: 1, examId: 1, attemptNo: 1 },
+    { unique: true }
+);
 
 export const Result = model("Result", resultSchema);

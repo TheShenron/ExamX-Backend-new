@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { HiringDrive } from "./hiringDrive.model";
 import { generateDriveCode } from "../../shared/utils/generateDriveCode";
 import { StatusCodes } from "http-status-codes";
+import { Result } from "../results/result.model";
 
 export const createHiringDrive = async (req: Request, res: Response) => {
     const drive = await HiringDrive.create({
@@ -86,27 +87,32 @@ export const addCandidateToHiringDrive = async (req: Request, res: Response) => 
         });
     }
 
-    const alreadyExists = drive.candidates.some(c =>
-        c.userId.toString() === userId
+    const candidateIdsSet = new Set(
+        drive.candidates.map(c => c.userId.toString())
     );
 
-    if (alreadyExists) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-            success: false,
-            message: "Candidate already added"
+    const newUserIds = userId.filter((id: string) => !candidateIdsSet.has(id));
+
+    if (newUserIds.length === 0) {
+        return res.status(StatusCodes.OK).json({
+            success: true,
+            message: "All given candidates are already added",
         });
     }
 
-    drive.candidates.push({
-        userId,
-        attemptsUsed: 0
-    });
+    drive.candidates.push(
+        ...newUserIds.map((id: string) => ({
+            userId: id,
+            attemptsUsed: 0,
+        }))
+    );
 
     await drive.save();
 
     res.json({
         success: true,
-        message: "Candidate added successfully"
+        message: "Candidates added successfully",
+        added: newUserIds,
     });
 };
 
@@ -263,4 +269,81 @@ export const getHiringDriveExams = async (req: Request, res: Response) => {
     });
 };
 
+export const getHiringDriveResults = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const drive = await HiringDrive.findOne({
+        _id: id,
+        deletedAt: null,
+    }).populate("candidates.userId", "name email");
+
+    if (!drive) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+            success: false,
+            message: "Hiring drive not found",
+        });
+    }
+
+    // get ALL results (history)
+    const results = await Result.find({ hiringDriveId: id })
+        .populate("examId", "title totalMarks")
+        .populate("userId", "name email")
+        .sort({ createdAt: -1 })
+        .lean();
+
+    // group by userId
+    const resultMap = new Map<string, any[]>();
+
+    for (const r of results) {
+        const uid = r.userId?._id?.toString();
+        if (!uid) continue;
+
+        if (!resultMap.has(uid)) resultMap.set(uid, []);
+        resultMap.get(uid)!.push(r);
+    }
+
+    const candidates = drive.candidates.map((c) => {
+        const uid = c.userId?._id?.toString();
+        const history = uid ? resultMap.get(uid) || [] : [];
+
+        // calculate summary using BEST attempt per exam (only submitted)
+        const bestScoreByExam = new Map<string, number>();
+
+        for (const r of history) {
+            if (r.status !== "submitted") continue;
+
+            const examId = r.examId?._id?.toString();
+            if (!examId) continue;
+
+            const prev = bestScoreByExam.get(examId) ?? 0;
+            bestScoreByExam.set(examId, Math.max(prev, r.score || 0));
+        }
+
+        const totalScore = [...bestScoreByExam.values()].reduce((a, b) => a + b, 0);
+
+        return {
+            user: c.userId,
+            attemptsUsed: c.attemptsUsed,
+
+            summary: {
+                totalScore,
+                overallPassed: totalScore >= drive.passingMarks,
+            },
+
+            history, // full attempts list
+        };
+    });
+
+    return res.json({
+        success: true,
+        data: {
+            drive: {
+                _id: drive._id,
+                name: drive.name,
+                passingMarks: drive.passingMarks,
+            },
+            candidates,
+        },
+    });
+};
 

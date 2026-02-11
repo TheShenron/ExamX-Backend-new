@@ -84,6 +84,21 @@ export const addExamHiringDriveParamSchema = z.object({
     id: objectIdSchema,
 });
 
+export const removeExamFromHiringDriveParamSchema = z.object({
+    id: objectIdSchema,
+    examId: objectIdSchema,
+});
+
+export const getHiringDriveExamsParamSchema = z.object({
+    id: objectIdSchema,
+});
+
+export const getHiringDriveResultsParamSchema = z.object({
+    id: objectIdSchema,
+});
+
+
+
 export const addExamHiringDriveBodySchema = z.object({
     examIds: z.array(objectIdSchema)
 })
