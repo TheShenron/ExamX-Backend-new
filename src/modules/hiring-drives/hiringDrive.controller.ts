@@ -104,6 +104,7 @@ export const addCandidateToHiringDrive = async (req: Request, res: Response) => 
         ...newUserIds.map((id: string) => ({
             userId: id,
             attemptsUsed: 0,
+            maxAttempts: drive.maxAttempts,
         }))
     );
 
@@ -147,19 +148,15 @@ export const updateCandidateAttempts = async (req: Request, res: Response) => {
     const query: any = {
         _id: id,
         deletedAt: null,
+        "candidates.userId": userId,
     };
 
-    // for inc: candidate must exist
-    if (action === "inc") {
-        query["candidates.userId"] = userId;
-    }
-
-    // for dec: candidate must exist AND attemptsUsed > 0
+    // dec should not go below 1
     if (action === "dec") {
         query.candidates = {
             $elemMatch: {
-                userId,
-                attemptsUsed: { $gt: 0 },
+                userId: userId,
+                maxAttempts: { $gt: 1 },
             },
         };
     }
@@ -167,7 +164,7 @@ export const updateCandidateAttempts = async (req: Request, res: Response) => {
     const updated = await HiringDrive.findOneAndUpdate(
         query,
         {
-            $inc: { "candidates.$.attemptsUsed": action === "inc" ? 1 : -1 },
+            $inc: { "candidates.$.maxAttempts": action === "inc" ? 1 : -1 },
         },
         { new: true }
     ).select("candidates");
@@ -177,7 +174,7 @@ export const updateCandidateAttempts = async (req: Request, res: Response) => {
             success: false,
             message:
                 action === "dec"
-                    ? "Cannot decrement (attempts already 0 or candidate not found)"
+                    ? "Cannot decrement (maxAttempts already 1 or candidate not found)"
                     : "Hiring drive or candidate not found",
         });
     }
@@ -190,10 +187,11 @@ export const updateCandidateAttempts = async (req: Request, res: Response) => {
         success: true,
         data: {
             userId,
-            attemptsUsed: candidate?.attemptsUsed ?? 0,
+            maxAttempts: candidate?.maxAttempts ?? 1,
         },
     });
 };
+
 
 export const addExamsToHiringDrive = async (req: Request, res: Response) => {
     const { id } = req.params;

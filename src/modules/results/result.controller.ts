@@ -27,7 +27,7 @@ export const startMyExam = async (req: Request, res: Response) => {
         deletedAt: null,
         "candidates.userId": userId,
         exams: examId,
-    }).select("startsAt endsAt isActive");
+    }).select("startsAt endsAt isActive candidates passingMarks");
 
     if (!drive) {
         return res.status(StatusCodes.FORBIDDEN).json({
@@ -37,8 +37,9 @@ export const startMyExam = async (req: Request, res: Response) => {
         });
     }
 
-    // (optional) check drive active + time
+    // 3) drive active + time checks
     const now = DateTime.utc();
+
     if (!drive.isActive) {
         return res.status(StatusCodes.FORBIDDEN).json({
             success: false,
@@ -60,122 +61,27 @@ export const startMyExam = async (req: Request, res: Response) => {
         });
     }
 
-    // 3) check active attempt
-    const activeAttempt = await Result.findOne({
-        userId,
-        examId,
-        hiringDriveId,
-        submittedAt: null,
-        status: "started",
-    });
-
-    if (activeAttempt) {
-        const startedAt = DateTime.fromJSDate(activeAttempt.startedAt!).toUTC();
-        const deadline = startedAt.plus({ minutes: exam.duration + 2 });
-
-        // if expired, mark expired and allow new attempt
-        if (now > deadline) {
-            activeAttempt.status = "expired";
-            activeAttempt.submittedAt = deadline.toJSDate();
-            activeAttempt.durationTaken = Math.floor(
-                deadline.diff(startedAt, "seconds").seconds
-            );
-            activeAttempt.score = 0;
-            activeAttempt.isPassed = false;
-
-            await activeAttempt.save();
-        } else {
-            return res.status(StatusCodes.BAD_REQUEST).json({
-                success: false,
-                message: "You already have an active attempt for this exam",
-            });
-        }
-    }
-
-    // 4) next attempt number
-    const lastAttempt = await Result.findOne({
-        userId,
-        examId,
-        hiringDriveId,
-    }).sort({ attemptNo: -1 });
-
-    const attemptNo = lastAttempt ? lastAttempt.attemptNo + 1 : 1;
-
-    // 5) create attempt
-    const result = await Result.create({
-        userId,
-        examId,
-        hiringDriveId,
-        attemptNo,
-        startedAt: now.toJSDate(),
-        submittedAt: null,
-        status: "started",
-        score: 0,
-        isPassed: false,
-    });
-
-    return res.json({
-        success: true,
-        message: "Exam started successfully",
-        data: result,
-    });
-};
-
-export const startUserExam = async (req: Request, res: Response) => {
-    const { examId, hiringDriveId, userId } = req.body;
-
-    // 1) validate exam exists
-    const exam = await Exam.findOne({ _id: examId, deletedAt: null }).select(
-        "duration"
+    // 4) find candidate from drive
+    const candidate = drive.candidates.find(
+        (c) => c.userId.toString() === userId
     );
 
-    if (!exam) {
-        return res.status(StatusCodes.NOT_FOUND).json({
-            success: false,
-            message: "Exam not found",
-        });
-    }
-
-    // 2) validate hiring drive exists + user is candidate + exam belongs to drive
-    const drive = await HiringDrive.findOne({
-        _id: hiringDriveId,
-        deletedAt: null,
-        "candidates.userId": userId,
-        exams: examId,
-    }).select("startsAt endsAt isActive");
-
-    if (!drive) {
+    if (!candidate) {
         return res.status(StatusCodes.FORBIDDEN).json({
             success: false,
-            message:
-                "Hiring drive not found OR you are not registered OR exam not in drive",
+            message: "You are not registered for this hiring drive",
         });
     }
 
-    // (optional) check drive active + time
-    const now = DateTime.utc();
-    if (!drive.isActive) {
+    // 5) enforce attempt limit
+    if (candidate.attemptsUsed >= candidate.maxAttempts!) {
         return res.status(StatusCodes.FORBIDDEN).json({
             success: false,
-            message: "Hiring drive is not active",
+            message: `Attempt limit reached. Max allowed: ${candidate.maxAttempts}`,
         });
     }
 
-    if (now < DateTime.fromJSDate(drive.startsAt).toUTC()) {
-        return res.status(StatusCodes.FORBIDDEN).json({
-            success: false,
-            message: "Hiring drive not started yet",
-        });
-    }
-
-    if (now > DateTime.fromJSDate(drive.endsAt).toUTC()) {
-        return res.status(StatusCodes.FORBIDDEN).json({
-            success: false,
-            message: "Hiring drive already ended",
-        });
-    }
-
-    // 3) check active attempt
+    // 6) check active attempt
     const activeAttempt = await Result.findOne({
         userId,
         examId,
@@ -207,7 +113,7 @@ export const startUserExam = async (req: Request, res: Response) => {
         }
     }
 
-    // 4) next attempt number
+    // 7) next attempt number
     const lastAttempt = await Result.findOne({
         userId,
         examId,
@@ -216,7 +122,7 @@ export const startUserExam = async (req: Request, res: Response) => {
 
     const attemptNo = lastAttempt ? lastAttempt.attemptNo + 1 : 1;
 
-    // 5) create attempt
+    // 8) create attempt
     const result = await Result.create({
         userId,
         examId,
@@ -228,6 +134,12 @@ export const startUserExam = async (req: Request, res: Response) => {
         score: 0,
         isPassed: false,
     });
+
+    // 9) increment attemptsUsed ONLY after successful attempt creation
+    await HiringDrive.updateOne(
+        { _id: hiringDriveId, "candidates.userId": userId },
+        { $inc: { "candidates.$.attemptsUsed": 1 } }
+    );
 
     return res.json({
         success: true,
@@ -239,99 +151,6 @@ export const startUserExam = async (req: Request, res: Response) => {
 export const submitMyExam = async (req: Request, res: Response) => {
     const { examId, hiringDriveId, score, isPassed } = req.body;
     const userId = req.user?.id;
-
-    // 1) validate exam exists
-    const exam = await Exam.findOne({ _id: examId, deletedAt: null }).select(
-        "duration"
-    );
-
-    if (!exam) {
-        return res.status(StatusCodes.NOT_FOUND).json({
-            success: false,
-            message: "Exam not found",
-        });
-    }
-
-    // 2) validate hiring drive exists + user is candidate + exam belongs to drive
-    const drive = await HiringDrive.findOne({
-        _id: hiringDriveId,
-        deletedAt: null,
-        "candidates.userId": userId,
-        exams: examId,
-    }).select("startsAt endsAt isActive");
-
-    if (!drive) {
-        return res.status(StatusCodes.FORBIDDEN).json({
-            success: false,
-            message:
-                "Hiring drive not found OR you are not registered OR exam not in drive",
-        });
-    }
-
-    // 3) find active attempt
-    const attempt = await Result.findOne({
-        userId,
-        examId,
-        hiringDriveId,
-        submittedAt: null,
-        status: "started",
-    });
-
-    if (!attempt) {
-        return res.status(StatusCodes.NOT_FOUND).json({
-            success: false,
-            message: "Active exam attempt not found",
-        });
-    }
-
-    if (!attempt.startedAt) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-            success: false,
-            message: "Invalid attempt: startedAt missing",
-        });
-    }
-
-    // 4) validate time
-    const now = DateTime.utc();
-    const startedAt = DateTime.fromJSDate(attempt.startedAt).toUTC();
-    const deadline = startedAt.plus({ minutes: exam.duration + 2 });
-
-    if (now > deadline) {
-        // mark expired
-        attempt.status = "expired";
-        attempt.submittedAt = deadline.toJSDate();
-        attempt.durationTaken = Math.floor(
-            deadline.diff(startedAt, "seconds").seconds
-        );
-        attempt.score = 0;
-        attempt.isPassed = false;
-
-        await attempt.save();
-
-        return res.status(StatusCodes.FORBIDDEN).json({
-            success: false,
-            message: "Time is over. Attempt expired.",
-        });
-    }
-
-    // 5) submit normally
-    attempt.score = score;
-    attempt.isPassed = isPassed;
-    attempt.submittedAt = now.toJSDate();
-    attempt.durationTaken = Math.floor(now.diff(startedAt, "seconds").seconds);
-    attempt.status = "submitted";
-
-    await attempt.save();
-
-    return res.json({
-        success: true,
-        message: "Exam submitted successfully",
-        data: attempt,
-    });
-};
-
-export const submitUserExam = async (req: Request, res: Response) => {
-    const { examId, hiringDriveId, score, isPassed, userId } = req.body;
 
     // 1) validate exam exists
     const exam = await Exam.findOne({ _id: examId, deletedAt: null }).select(

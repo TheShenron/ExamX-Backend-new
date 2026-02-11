@@ -28,6 +28,8 @@ export const createHiringDriveSchema = z.object({
     startsAt: isoDateString,
     endsAt: isoDateString,
 
+    maxAttempts: z.coerce.number().min(1, "Attempts must be >= 0").max(10, "Attempts must be <= 10"),
+
     // optional at creation
     candidates: z
         .array(

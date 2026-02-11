@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { deleteExam, getMyExamResultByExamId, getUserExamResultByExamId, getMyExamResult, getUserExamResult, startMyExam, startUserExam, submitMyExam, submitUserExam } from "./result.controller";
+import { deleteExam, getMyExamResultByExamId, getUserExamResultByExamId, getMyExamResult, getUserExamResult, startMyExam, submitMyExam } from "./result.controller";
 import { allowRoles, verifyToken } from "../../middlewares/verify-token";
 import { validateReq } from "../../middlewares/validate-req";
 import { startExamSchema, submitExamSchema, deleteExamxamSchema, getExamResultSchema, getExamResultByExamIdSchema } from "./result.validator";
@@ -12,9 +12,7 @@ const router = Router();
 router.use("/", proctoringRoutes);
 
 router.post("/me/start", verifyToken, validateReq({ body: startExamSchema }), allowRoles(ADMIN, CANDIDATE), startMyExam);
-router.post("/start", verifyToken, validateReq({ body: startExamSchema }), allowRoles(ADMIN, CANDIDATE), startUserExam);
 router.post("/me/submit", verifyToken, validateReq({ body: submitExamSchema }), allowRoles(ADMIN, CANDIDATE), submitMyExam);
-router.post("/submit", verifyToken, validateReq({ body: submitExamSchema }), allowRoles(ADMIN, CANDIDATE), submitUserExam);
 // router.delete("/:examId/:hiringDriveId/delete", verifyToken, validateReq({ params: deleteExamxamSchema }), allowRoles(ADMIN), deleteExam);
 // router.get("/:examId/:hiringDriveId/:userId/get-by-exam", verifyToken, validateReq({ params: getExamResultByExamIdSchema }), allowRoles(ADMIN, HR), getUserExamResultByExamId);
 // router.get("/me/:examId/:hiringDriveId/get-by-exam", verifyToken, validateReq({ params: getExamResultByExamIdSchema }), allowRoles(ADMIN, HR), getMyExamResultByExamId);

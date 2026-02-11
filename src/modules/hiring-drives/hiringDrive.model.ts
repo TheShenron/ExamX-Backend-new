@@ -3,7 +3,8 @@ import { Schema, model, Types } from "mongoose";
 const candidateSchema = new Schema(
     {
         userId: { type: Types.ObjectId, ref: "User", required: true },
-        attemptsUsed: { type: Number, default: 0 }
+        attemptsUsed: { type: Number, default: 0 },
+        maxAttempts: { type: Number, default: null },
     },
     { _id: false }
 );
@@ -19,6 +20,7 @@ const hiringDriveSchema = new Schema(
             required: true
         },
 
+        maxAttempts: { type: Number, default: 1, min: 1 },
 
         passingMarks: {
             type: Number,
