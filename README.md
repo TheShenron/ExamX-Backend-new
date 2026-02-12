@@ -1,39 +1,54 @@
-# Code Proctor
+# Kanshi Core — Backend for the Kanshi Suite
 
-Code Proctor is a Visual Studio Code extension for monitoring coding activity during exams, interviews, and assessments. It helps maintain fair coding practices by tracking user behavior inside the editor.
+**Kanshi Core** is the backend service powering the Kanshi ecosystem.
 
-## Features
+It handles authentication, user management, session control, routing, and secure storage of proctoring activity — acting as the central command layer between the Kanshi extension and the Kanshi Console dashboard.
 
-- Monitor coding activity in real time
-- Detect focus change and tab switching
-- Start and stop proctoring sessions
-- Generate basic activity logs
+Built to be reliable, structured, and audit-friendly.
 
-## Requirements
+---
 
-- Visual Studio Code version 1.80 or later
+## ✨ What Kanshi Core Does
 
-## Extension Settings
+Kanshi Core is responsible for:
 
-This extension provides the following settings:
+- 🔐 Authentication and authorization
+- 👤 User and role management (admin / examiner / candidate)
+- 🧾 Session creation and control
+- 📦 Receiving and validating activity events from the extension
+- 🗂️ Storing structured logs for later review
+- 🔎 Serving APIs for Kanshi Console (dashboard)
 
-- `codeProctor.enable`: Enable or disable the extension
-- `codeProctor.strictMode`: Enable strict monitoring
-- `codeProctor.logLevel`: Control logging level
+---
 
-## Known Issues
+## ⚔️ Features
 
-- Limited detection in remote environments
-- OS-level activity may not always be captured
+- 🧠 Clean REST API architecture
+- 🔐 Secure authentication (JWT/session based)
+- 👥 Role-based access control (RBAC)
+- 📋 Exam session lifecycle management
+- 🧾 Proctoring log ingestion + validation
+- 📊 Dashboard-ready endpoints for analytics & review
+- 🧩 Designed for scalability (future microservices friendly)
 
-## Release Notes
+---
 
-### 1.0.0
-Initial release of Code Proctor
+## 🧩 Requirements
 
-## For More Information
+> Update these based on your stack.
 
-- Visual Studio Code Extension Guidelines  
-  https://code.visualstudio.com/api/references/extension-guidelines
+- Node.js 18+ (recommended)
+- Database (MongoDB)
+- Environment variables configured
 
-Enjoy using Code Proctor!
+---
+
+## ⚙️ Environment Variables
+
+Create a `.env` file in the root:
+
+```env
+PORT=5000
+DATABASE_URL=your_database_url
+JWT_SECRET=your_secret_key
+CORS_ORIGIN=http://localhost:3000
