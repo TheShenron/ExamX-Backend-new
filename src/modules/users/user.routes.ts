@@ -14,8 +14,8 @@ router.put("/me", validateReq({ body: createUserSchema }), verifyToken, allowRol
 router.put("/:userId", validateReq({ body: createUserSchema }), verifyToken, allowRoles(ADMIN), updateUserById);
 router.delete("/:userId", verifyToken, allowRoles(ADMIN), deleteUserById);
 router.delete("/me", verifyToken, allowRoles(ADMIN), deleteMyUser);
+router.get("/me/hiring-drives", verifyToken, allowRoles(ADMIN, CANDIDATE), getMyHiringDrives);
 router.get("/:userId/hiring-drives", verifyToken, allowRoles(ADMIN, HR), getUserHiringDrivesById);
-router.get("/me/hiring-drives", verifyToken, allowRoles(CANDIDATE), getMyHiringDrives);
 router.get("/me/hiring-drives-exam/:driveId", verifyToken, validateReq({ params: getMyHiringDriveExamSchema }), allowRoles(ADMIN, CANDIDATE), getMyHiringDriveExam);
 router.get("/:id/results/:userId", verifyToken, allowRoles(ADMIN), getUserHiringDriveResult);
 
