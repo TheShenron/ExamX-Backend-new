@@ -16,7 +16,7 @@ router.delete("/:userId", verifyToken, allowRoles(ADMIN), deleteUserById);
 router.delete("/me", verifyToken, allowRoles(ADMIN), deleteMyUser);
 router.get("/:userId/hiring-drives", verifyToken, allowRoles(ADMIN, HR), getUserHiringDrivesById);
 router.get("/me/hiring-drives", verifyToken, allowRoles(CANDIDATE), getMyHiringDrives);
-router.get("/me/hiring-drives/:id/exams", verifyToken, validateReq({ params: getMyHiringDriveExamSchema }), allowRoles(CANDIDATE), getMyHiringDriveExam);
+router.get("/me/hiring-drives-exam/:driveId", verifyToken, validateReq({ params: getMyHiringDriveExamSchema }), allowRoles(ADMIN, CANDIDATE), getMyHiringDriveExam);
 router.get("/:id/results/:userId", verifyToken, allowRoles(ADMIN), getUserHiringDriveResult);
 
 export default router;

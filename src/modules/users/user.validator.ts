@@ -24,5 +24,5 @@ export const loginSchema = z.object({
 });
 
 export const getMyHiringDriveExamSchema = z.object({
-    examId: objectIdSchema
+    driveId: objectIdSchema
 });
