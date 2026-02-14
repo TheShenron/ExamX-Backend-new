@@ -149,7 +149,7 @@ export const startMyExam = async (req: Request, res: Response) => {
 };
 
 export const submitMyExam = async (req: Request, res: Response) => {
-    const { examId, hiringDriveId, score, isPassed } = req.body;
+    const { examId, hiringDriveId, score } = req.body;
     const userId = req.user?.id;
 
     // 1) validate exam exists
@@ -170,7 +170,7 @@ export const submitMyExam = async (req: Request, res: Response) => {
         deletedAt: null,
         "candidates.userId": userId,
         exams: examId,
-    }).select("startsAt endsAt isActive");
+    }).select("startsAt endsAt isActive passingMarks");
 
     if (!drive) {
         return res.status(StatusCodes.FORBIDDEN).json({
@@ -228,7 +228,7 @@ export const submitMyExam = async (req: Request, res: Response) => {
 
     // 5) submit normally
     attempt.score = score;
-    attempt.isPassed = isPassed;
+    attempt.isPassed = score >= Number(drive.passingMarks);
     attempt.submittedAt = now.toJSDate();
     attempt.durationTaken = Math.floor(now.diff(startedAt, "seconds").seconds);
     attempt.status = "submitted";

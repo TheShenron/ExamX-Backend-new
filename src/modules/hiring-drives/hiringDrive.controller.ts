@@ -27,7 +27,7 @@ export const deleteHiringDrive = async (req: Request, res: Response) => {
     const drive = await HiringDrive.findOneAndUpdate(
         { _id: id, deletedAt: null },
         { deletedAt: new Date(), isActive: false },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     if (!drive) {
@@ -166,7 +166,7 @@ export const updateCandidateAttempts = async (req: Request, res: Response) => {
         {
             $inc: { "candidates.$.maxAttempts": action === "inc" ? 1 : -1 },
         },
-        { new: true }
+        { returnDocument: "after" }
     ).select("candidates");
 
     if (!updated) {
@@ -204,7 +204,7 @@ export const addExamsToHiringDrive = async (req: Request, res: Response) => {
                 exams: { $each: examIds },
             },
         },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     if (!drive) {
@@ -227,7 +227,7 @@ export const removeExamFromHiringDrive = async (req: Request, res: Response) => 
     const drive = await HiringDrive.findOneAndUpdate(
         { _id: id, deletedAt: null },
         { $pull: { exams: examId } },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     if (!drive) {

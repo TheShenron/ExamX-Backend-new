@@ -14,7 +14,7 @@ app.use(express.json());
 
 // Health check route
 app.get('/', (req: Request, res: Response) => {
-    res.status(200).json({ status: 'OK', environment: process.env.NODE_ENV, msg: 'New Examx Backend' });
+    res.status(200).json({ status: 'OK', environment: process.env.NODE_ENV, msg: 'Kanshi Backend' });
 });
 
 app.use("/api/users", userRoutes);

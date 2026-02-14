@@ -26,7 +26,7 @@ export const updateExam = async (req: Request, res: Response) => {
             ...req.body,
             updatedBy: userId
         },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     if (!exam) {
@@ -50,7 +50,7 @@ export const deleteExam = async (req: Request, res: Response) => {
             isActive: false,
             updatedBy: userId
         },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     if (!exam) {

@@ -123,7 +123,7 @@ export const deleteMyUser = async (req: Request, res: Response) => {
     const user = await User.findOneAndUpdate(
         { _id: userId, deletedAt: null },
         { deletedAt: new Date() },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     if (!user) {
@@ -142,7 +142,7 @@ export const deleteUserById = async (req: Request, res: Response) => {
     const user = await User.findOneAndUpdate(
         { _id: userId, deletedAt: null },
         { deletedAt: new Date() },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     if (!user) {
