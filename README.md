@@ -45,10 +45,12 @@ Kanshi Core is responsible for:
 
 ## ⚙️ Environment Variables
 
-Create a `.env` file in the root:
+Create a `.env.dev` and `.env.prod`  file in the root:
 
 ```env
-PORT=5000
-DATABASE_URL=your_database_url
+NODE_ENV=development/production
+PORT=5174
+DB_URI=mongodb://127.0.0.1:27017/you_app_name
 JWT_SECRET=your_secret_key
-CORS_ORIGIN=http://localhost:3000
+JWT_EXPIRES_IN=3600
+CREATE_USER_CODE=your_secret_code
