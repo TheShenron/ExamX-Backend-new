@@ -10,7 +10,8 @@
     "test": "cross-env NODE_ENV=test jest",
     "build": "tsc",
     "dev": "NODE_ENV=dev nodemon",
-    "start": "NODE_ENV=prod node dist/server.js"
+    "prod": "NODE_ENV=prod node dist/server.js",
+    "start": "node dist/server.js"
   },
   "repository": {
     "type": "git",
