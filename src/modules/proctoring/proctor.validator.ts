@@ -12,6 +12,7 @@ export const deleteProctoringResultSchema = z.object({
 
 export const getProctoringResultSchema = z.object({
     resultId: objectIdSchema,
+    userId: objectIdSchema,
 });
 
 export const addProctoringBodySchema = z.object({
