@@ -149,6 +149,14 @@ export const startMyExam = async (req: Request, res: Response) => {
 };
 
 export const submitMyExam = async (req: Request, res: Response) => {
+
+    if (!req.file?.buffer) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+            success: false,
+            message: "Result zip file is required.",
+        });
+    }
+
     const { examId, hiringDriveId, score } = req.body;
     const userId = req.user?.id;
 
@@ -232,6 +240,7 @@ export const submitMyExam = async (req: Request, res: Response) => {
     attempt.submittedAt = now.toJSDate();
     attempt.durationTaken = Math.floor(now.diff(startedAt, "seconds").seconds);
     attempt.status = "submitted";
+    attempt.resultZipFile = req.file.buffer
 
     await attempt.save();
 

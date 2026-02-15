@@ -14,6 +14,10 @@ const resultSchema = new Schema(
             default: "started",
         },
 
+        resultZipFile: {
+            type: Buffer,
+        },
+
         startedAt: Date,
         submittedAt: Date,
         durationTaken: Number,
